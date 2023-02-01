@@ -1,0 +1,174 @@
+---
+title: "US Hardware Regression"
+author: "Nate Cox"
+date: "2023-02-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(corrplot)  
+library(bestglm)  
+library(car) 
+library(glmnet)
+library(gridExtra)
+library(caret)
+library(sjmisc)
+library(lubridate)
+library(ggfortify)
+```
+
+
+```{r}
+econ <- read.csv('C:/BYU/2023(1) Winter/Video Game Case Study/Video-Game-Sales-Project/Indicators_edit.csv') %>%
+  mutate(year = Year) %>%
+  select(15,3:14)
+
+hardware_global <- read.csv('C:/BYU/2023(1) Winter/Video Game Case Study/Video-Game-Sales-Project/USA_Sales_vs_CCI.csv') %>%
+  mutate(year = lubridate::year(TIME), 
+                month = lubridate::month(TIME), 
+                day = lubridate::day(TIME),
+         Hardware = as.numeric(Total)) %>%
+  select(3:5,7)
+
+
+omnibus_US <-right_join(econ, hardware_global, by = "year") %>%
+  select(1,8:16) %>%
+  mutate(`Inflation (annual %)` = as.numeric(`US.Inflation..annual...`),
+         `GDP per capita growth (annual %)` = as.numeric(`US.GDP.per.capita.growth..annual...`),
+         `GDP per capita` = as.numeric(`US.GDP.per.capita`),
+         `Lending interest rate (%)` = as.numeric(`US.Lending.interest.rate....`),
+         `Unemployment` = as.numeric(`US.Unemployment`),
+         `CPI` = as.numeric(`US.Consumer.price.index`),
+         `CCI` = as.numeric(CCI),
+         Holidays = ifelse(month == 11 | month == 12, 1, 0), 
+         #Date = as.Date(paste(omnibus_US$year, omnibus_US$month, 01), "%Y %m %d")
+         ) %>%
+  select(10,1,9,8,11:17)
+omnibus_USi <- omnibus_US[-c(841:945),] #%>%
+  #select(1,3:9)
+```
+#Exploratory Data Analysis 
+```{r}
+scat_CCI <- ggplot(data = omnibus_USi) +
+  geom_jitter(mapping = aes(x = CCI, y = Hardware)) +
+  theme(aspect.ratio = 1)
+scat_Inflation <- ggplot(data = omnibus_USi) +
+  geom_jitter(mapping = aes(x = `Inflation (annual %)`, y = Hardware)) +
+  theme(aspect.ratio = 1)
+scat_GDPgrowth <- ggplot(data = omnibus_USi) +
+  geom_jitter(mapping = aes(x = `GDP per capita growth (annual %)`, y = Hardware)) +
+  theme(aspect.ratio = 1)
+scat_GDP <- ggplot(data = omnibus_USi) +
+  geom_jitter(mapping = aes(x = `GDP per capita`, y = Hardware)) +
+  theme(aspect.ratio = 1)
+scat_InterestRate <- ggplot(data = omnibus_USi) +
+  geom_jitter(mapping = aes(x = `Lending interest rate (%)`, y = Hardware)) +
+  theme(aspect.ratio = 1)
+scat_Unemployment <- ggplot(data = omnibus_USi) +
+  geom_jitter(mapping = aes(x = `Unemployment`, y = Hardware)) +
+  theme(aspect.ratio = 1)
+scat_CPI <- ggplot(data = omnibus_USi) +
+  geom_jitter(mapping = aes(x = `CPI`, y = Hardware)) +
+  theme(aspect.ratio = 1)
+box_holiday <- ggplot(data = omnibus_USi) +
+  geom_boxplot(mapping = aes(x = as.factor(Holidays), y = Hardware)) +
+  theme(aspect.ratio = 1)
+
+grid.arrange(scat_CCI, scat_Inflation, scat_GDPgrowth, scat_GDP, scat_InterestRate, scat_Unemployment, scat_CPI, box_holiday, ncol =4)
+```
+```{r}
+oUSi_cor <- cor(omnibus_USi[,c("Hardware", "Inflation (annual %)", "GDP per capita growth (annual %)", "GDP per capita", "Lending interest rate (%)", "Unemployment", "CPI", "CCI")])
+corrplot(oUSi_cor, type = "upper",
+         method ="number",
+         tl.col = "black", tl.srt = 50) +
+  theme(aspect.ratio = 1)
+```
+##Variable Selection
+```{r}
+oUSi_x <- as.matrix(omnibus_USi[, 4:11])
+oUSi_y <- as.matrix(omnibus_USi[, 1])
+oUSi_Elnet <- cv.glmnet(x = oUSi_x,
+                        y = oUSi_y, 
+                        type.measure = "mse", 
+                        alpha = .5)  # 0 is code for "ridge regression"
+
+# lambda.min: value of lambda that gives minimum mean cross-validated error
+oUSi_Elnet$lambda.min
+# lambda.1se: value of lambda within 1 standard error of the minimum 
+# cross-validated error
+oUSi_Elnet$lambda.1se
+
+coef(oUSi_Elnet, s = "lambda.min")
+coef(oUSi_Elnet, s = "lambda.1se")
+
+bestsub_bic <- bestglm(omnibus_USi,
+                        IC = "BIC",
+                        method = "exhaustive")
+summary(backward_bic$BestModel)
+```
+#Check For Interaction
+```{r}
+summary(lm(Hardware ~ CCI + Holidays, data = omnibus_USi))
+summary(lm(Hardware ~ CCI + Holidays + Unemployment, data = omnibus_USi))
+#summary(lm(Hardware ~ CCI + `Unemployment` + CCI:`Unemployment`, data = omnibus_USi))
+```
+#Liniar Model
+```{r}
+#omnibus_USi_lm <- lm(Hardware ~ CCI + `US Unemployment` + `US Inflation (annual %)` + `US GDP per capita` +`US Lending interest rate (%)`, data = omnibus_USi)
+omnibus_USi_lm <- lm(Hardware ~ CCI + Holidays, data = omnibus_USi)
+omnibus_USi$residuals <- omnibus_USi_lm$residuals
+omnibus_USi$fitted <- omnibus_USi_lm$fitted.values
+summary(omnibus_USi_lm)
+```
+
+#Assumptions
+```{r}
+#crPlots(omnibus_USi_lm)
+
+avPlots(omnibus_USi_lm)
+
+autoplot(omnibus_USi_lm, which = 2, ncol = 1, nrow = 1) + 
+  theme(aspect.ratio = 1)
+
+ggplot(omnibus_USi) + 
+  geom_boxplot(mapping = aes(x = Hardware, y = residuals))+ 
+  theme(aspect.ratio = 1)
+
+autoplot(omnibus_USi_lm, which = 1, ncol = 1, nrow = 1) +
+  theme(aspect.ratio = 1)
+
+ggplot(data = omnibus_USi) + 
+  geom_histogram(mapping = aes(x = residuals, y = ..density..), 
+                 binwidth = 80000) +
+  stat_function(fun = dnorm, 
+                color = "red", 
+                linewidth = 2,
+                args = list(mean = mean(omnibus_USi$residuals), 
+                            sd = sd(omnibus_USi$residuals))) +
+  theme(aspect.ratio = 1)
+```
+
+#Influential Points
+```{r}
+plot(cooks.distance(omnibus_USi_lm))
+omnibus_USi$dffits <- dffits(omnibus_USi_lm)
+
+ggplot(data = omnibus_USi) + 
+  geom_point(mapping = aes(x = as.numeric(rownames(omnibus_USi)), 
+                           y = abs(dffits))) +
+  ylab("Absolute Value of DFFITS for Y") +
+  xlab("Observation Number") +
+  geom_hline(mapping = aes(yintercept = 2 * sqrt(length(omnibus_USi_lm$coefficients) /
+                                                   length(dffits))),
+             color = "red", 
+             linetype = "dashed") +
+  theme(aspect.ratio = 1)
+```
+#Inference
+```{r}
+confint(omnibus_USi_lm)
+newdata = data.frame(CCI = 97.8, Holidays = 1) 
+predict(omnibus_USi_lm, newdata = newdata, interval = "confidence")
+```
+
