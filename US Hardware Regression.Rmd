@@ -16,6 +16,7 @@ library(caret)
 library(sjmisc)
 library(lubridate)
 library(ggfortify)
+library(readxl)
 ```
 
 
@@ -24,29 +25,38 @@ econ <- read.csv('C:/BYU/2023(1) Winter/Video Game Case Study/Video-Game-Sales-P
   mutate(year = Year) %>%
   select(15,3:14)
 
-hardware_global <- read.csv('C:/BYU/2023(1) Winter/Video Game Case Study/Video-Game-Sales-Project/USA_Sales_vs_CCI.csv') %>%
-  mutate(year = lubridate::year(TIME), 
-                month = lubridate::month(TIME), 
-                day = lubridate::day(TIME),
-         Hardware = as.numeric(Total)) %>%
-  select(3:5,7)
+Unemployment_m<- read_excel("Unemployment Rates US.xlsx") %>%
+  rename("Date" = "Month",
+         "Unemployment" = "Total")
 
+hardware <- read.csv('C:/BYU/2023(1) Winter/Video Game Case Study/Video-Game-Sales-Project/USA_Sales_vs_CCI.csv') %>%
+  rename("Date" = "TIME") %>%
+  mutate(Date = as.Date(Date),
+         year = lubridate::year(Date), 
+                month = lubridate::month(Date), 
+         Hardware = as.numeric(Total)) #%>%
+  #select(3:5,7)
 
-omnibus_US <-right_join(econ, hardware_global, by = "year") %>%
-  select(1,8:16) %>%
-  mutate(`Inflation (annual %)` = as.numeric(`US.Inflation..annual...`),
-         `GDP per capita growth (annual %)` = as.numeric(`US.GDP.per.capita.growth..annual...`),
-         `GDP per capita` = as.numeric(`US.GDP.per.capita`),
-         `Lending interest rate (%)` = as.numeric(`US.Lending.interest.rate....`),
-         `Unemployment` = as.numeric(`US.Unemployment`),
-         `CPI` = as.numeric(`US.Consumer.price.index`),
-         `CCI` = as.numeric(CCI),
-         Holidays = ifelse(month == 11 | month == 12, 1, 0), 
-         Date = as.Date(paste(year, month, 01), "%Y %m %d")
-         ) %>%
-  select(10,18,1,9,8,11:17)
-omnibus_USi <- omnibus_US[-c(841:945),] %>%
-  select(1,3:12)
+omnibus_US <-right_join(Unemployment_m, hardware, by = "Date")
+omnibus_USi <- omnibus_US[-c(932:945),] %>%
+  mutate(Holidays = ifelse(month == 11 | month == 12, 1, 0)) %>%
+  select(10,8,9,7,2:5)
+
+#omnibus_US <-right_join(econ, hardware, by = "year") %>%
+ # select(1,8:16) %>%
+  #mutate(`Inflation (annual %)` = as.numeric(`US.Inflation..annual...`),
+   #      `GDP per capita growth (annual %)` = as.numeric(`US.GDP.per.capita.growth..annual...`),
+   #      `GDP per capita` = as.numeric(`US.GDP.per.capita`),
+    #     `Lending interest rate (%)` = as.numeric(`US.Lending.interest.rate....`),
+     #    `Unemployment` = as.numeric(`US.Unemployment`),
+      #   `CPI` = as.numeric(`US.Consumer.price.index`),
+       #  `CCI` = as.numeric(CCI),
+        # Holidays = ifelse(month == 11 | month == 12, 1, 0), 
+         #Date = as.Date(paste(year, month, 01), "%Y %m %d")
+         #) %>%
+  #select(10,18,1,9,8,11:17)
+#omnibus_USi <- omnibus_US[-c(841:945),] %>%
+ # select(1,3:12)
 ```
 #Interesting Graphs
 ```{r}
