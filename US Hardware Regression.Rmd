@@ -42,12 +42,19 @@ omnibus_US <-right_join(econ, hardware_global, by = "year") %>%
          `CPI` = as.numeric(`US.Consumer.price.index`),
          `CCI` = as.numeric(CCI),
          Holidays = ifelse(month == 11 | month == 12, 1, 0), 
-         #Date = as.Date(paste(omnibus_US$year, omnibus_US$month, 01), "%Y %m %d")
+         Date = as.Date(paste(year, month, 01), "%Y %m %d")
          ) %>%
-  select(10,1,9,8,11:17)
-omnibus_USi <- omnibus_US[-c(841:945),] #%>%
-  #select(1,3:9)
+  select(10,18,1,9,8,11:17)
+omnibus_USi <- omnibus_US[-c(841:945),] %>%
+  select(1,3:12)
 ```
+#Interesting Graphs
+```{r}
+ggplot(data = omnibus_US) +
+  geom_smooth(mapping = aes(x= Date, y = CCI))+
+  geom_smooth(mapping = aes(x= Date, y = Hardware/2000))
+```
+
 #Exploratory Data Analysis 
 ```{r}
 scat_CCI <- ggplot(data = omnibus_USi) +
@@ -105,7 +112,7 @@ coef(oUSi_Elnet, s = "lambda.1se")
 bestsub_bic <- bestglm(omnibus_USi,
                         IC = "BIC",
                         method = "exhaustive")
-summary(backward_bic$BestModel)
+summary(bestsub_bic$BestModel)
 ```
 #Check For Interaction
 ```{r}
