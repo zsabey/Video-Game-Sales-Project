@@ -20,11 +20,11 @@ library(ggfortify)
 
 
 ```{r}
-econ <- read.csv('C:/BYU/2023(1) Winter/Video Game Case Study/Video-Game-Sales-Project/Indicators_edit.csv') %>%
+econ <- read.csv('Indicators_edit.csv') %>%
   mutate(year = Year) %>%
   select(15,3:14)
 
-hardware_global <- read.csv('C:/BYU/2023(1) Winter/Video Game Case Study/Video-Game-Sales-Project/USA_Sales_vs_CCI.csv') %>%
+hardware_global <- read.csv('USA_Sales_vs_CCI.csv') %>%
   mutate(year = lubridate::year(TIME), 
                 month = lubridate::month(TIME), 
                 day = lubridate::day(TIME),
@@ -105,7 +105,7 @@ coef(oUSi_Elnet, s = "lambda.1se")
 bestsub_bic <- bestglm(omnibus_USi,
                         IC = "BIC",
                         method = "exhaustive")
-summary(backward_bic$BestModel)
+summary(bestsub_bic$BestModel)
 ```
 #Check For Interaction
 ```{r}
