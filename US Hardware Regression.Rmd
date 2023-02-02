@@ -40,7 +40,7 @@ hardware <- read.csv('C:/BYU/2023(1) Winter/Video Game Case Study/Video-Game-Sal
 omnibus_US <-right_join(Unemployment_m, hardware, by = "Date")
 omnibus_USi <- omnibus_US[-c(932:945),] %>%
   mutate(Holidays = ifelse(month == 11 | month == 12, 1, 0)) %>%
-  select(10,8,9,7,2:5)
+  select(10,9,7,2:5,11)
 
 #omnibus_US <-right_join(econ, hardware, by = "year") %>%
  # select(1,8:16) %>%
@@ -66,7 +66,7 @@ ggplot(data = omnibus_US) +
 ```
 
 #Exploratory Data Analysis 
-```{r}
+```{#r}
 scat_CCI <- ggplot(data = omnibus_USi) +
   geom_jitter(mapping = aes(x = CCI, y = Hardware)) +
   theme(aspect.ratio = 1)
@@ -95,7 +95,7 @@ box_holiday <- ggplot(data = omnibus_USi) +
 grid.arrange(scat_CCI, scat_Inflation, scat_GDPgrowth, scat_GDP, scat_InterestRate, scat_Unemployment, scat_CPI, box_holiday, ncol =4)
 ```
 ```{r}
-oUSi_cor <- cor(omnibus_USi[,c("Hardware", "Inflation (annual %)", "GDP per capita growth (annual %)", "GDP per capita", "Lending interest rate (%)", "Unemployment", "CPI", "CCI")])
+oUSi_cor <- cor(omnibus_USi %>% select(1,3:7))
 corrplot(oUSi_cor, type = "upper",
          method ="number",
          tl.col = "black", tl.srt = 50) +
@@ -103,7 +103,7 @@ corrplot(oUSi_cor, type = "upper",
 ```
 ##Variable Selection
 ```{r}
-oUSi_x <- as.matrix(omnibus_USi[, 4:11])
+oUSi_x <- as.matrix(omnibus_USi[, 2:7])
 oUSi_y <- as.matrix(omnibus_USi[, 1])
 oUSi_Elnet <- cv.glmnet(x = oUSi_x,
                         y = oUSi_y, 
@@ -126,14 +126,14 @@ summary(bestsub_bic$BestModel)
 ```
 #Check For Interaction
 ```{r}
-summary(lm(Hardware ~ CCI + Holidays, data = omnibus_USi))
-summary(lm(Hardware ~ CCI + Holidays + Unemployment, data = omnibus_USi))
+summary(lm(Hardware ~ CCI + month, data = omnibus_USi))
+summary(lm(Hardware ~ CCI + month + `Men, 20 years and over`, data = omnibus_USi))
 #summary(lm(Hardware ~ CCI + `Unemployment` + CCI:`Unemployment`, data = omnibus_USi))
 ```
 #Liniar Model
 ```{r}
 #omnibus_USi_lm <- lm(Hardware ~ CCI + `US Unemployment` + `US Inflation (annual %)` + `US GDP per capita` +`US Lending interest rate (%)`, data = omnibus_USi)
-omnibus_USi_lm <- lm(Hardware ~ CCI + Holidays, data = omnibus_USi)
+omnibus_USi_lm <- lm(Hardware ~ CCI + Holidays + `Men, 20 years and over`, data = omnibus_USi)
 omnibus_USi$residuals <- omnibus_USi_lm$residuals
 omnibus_USi$fitted <- omnibus_USi_lm$fitted.values
 summary(omnibus_USi_lm)
@@ -141,7 +141,7 @@ summary(omnibus_USi_lm)
 
 #Assumptions
 ```{r}
-#crPlots(omnibus_USi_lm)
+crPlots(omnibus_USi_lm)
 
 avPlots(omnibus_USi_lm)
 
@@ -185,7 +185,8 @@ ggplot(data = omnibus_USi) +
 #Inference
 ```{r}
 confint(omnibus_USi_lm)
-newdata = data.frame(CCI = 97.8, Holidays = 1) 
+newdata = data.frame(CCI = 96.66, Holidays = 0, `Men, 20 years and over`= 3.3) %>%
+  rename("Men, 20 years and over" ="Men..20.years.and.over")
 predict(omnibus_USi_lm, newdata = newdata, interval = "confidence")
 ```
 
