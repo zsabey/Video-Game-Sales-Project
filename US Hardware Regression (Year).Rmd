@@ -19,7 +19,6 @@ library(ggfortify)
 library(readxl)
 ```
 
-
 ```{r}
 econ <- read.csv('Indicators_edit.csv') %>%
   rename("Date" = "Year") %>%
@@ -32,9 +31,9 @@ hardware <- read.csv('USA_Sales_vs_CCI_by_year.csv') %>%
   mutate(Hardware = as.numeric(Hardware)) 
 
 omnibus_US <-right_join(econ, hardware, by = "Date") %>%
-  mutate(`Inflation (annual %)` = as.numeric(`US.Inflation..annual...`),
-         `GDP per capita growth (annual %)` = as.numeric(`US.GDP.per.capita.growth..annual...`),
-         `GDP per capita` = as.numeric(`US.GDP.per.capita`),
+  mutate(`Inflation %` = as.numeric(`US.Inflation..annual...`),
+         `GDP pc growth %` = as.numeric(`US.GDP.per.capita.growth..annual...`),
+         `GDP pc` = as.numeric(`US.GDP.per.capita`),
          `Lending interest rate` = as.numeric(`US.Lending.interest.rate....`),
          `Unemployment` = as.numeric(`US.Unemployment`),
          `CPI` = as.numeric(`US.Consumer.price.index`),
@@ -42,36 +41,46 @@ omnibus_US <-right_join(econ, hardware, by = "Date") %>%
   select(8:15,1)
 omnibus_USi <- omnibus_US[-c(18:19),] 
 ```
+
 #Interesting Graphs
 
+#Exploratory Data Analysis
 
-#Exploratory Data Analysis 
 ```{r}
 scat_CCI <- ggplot(data = omnibus_USi) +
-  geom_jitter(mapping = aes(x = Hardware, y = CCI )) +
+  geom_jitter(mapping = aes(x = Hardware/1000000, y = CCI )) +
+  xlab("Hardware (mil)") +
   theme(aspect.ratio = 1)
 scat_Inflation <- ggplot(data = omnibus_USi) +
-  geom_jitter(mapping = aes(x = Hardware, y = `Inflation (annual %)`)) +
+  geom_jitter(mapping = aes(x = Hardware/1000000, y = `Inflation %`)) +
+  xlab("Hardware (mil)") +
   theme(aspect.ratio = 1)
 scat_GDPgrowth <- ggplot(data = omnibus_USi) +
-  geom_jitter(mapping = aes(x = Hardware, y = `GDP per capita growth (annual %)`)) +
+  geom_jitter(mapping = aes(x = Hardware/1000000, y = `GDP pc growth %`)) +
+  xlab("Hardware (mil)") +
   theme(aspect.ratio = 1)
 scat_GDP <- ggplot(data = omnibus_USi) +
-  geom_jitter(mapping = aes(x = Hardware, y = `GDP per capita`)) +
+  geom_jitter(mapping = aes(x = Hardware/1000000, y = `GDP pc`)) +
+  xlab("Hardware (mil)") +
   theme(aspect.ratio = 1)
 scat_InterestRate <- ggplot(data = omnibus_USi) +
-  geom_jitter(mapping = aes(x = Hardware, y = `Lending interest rate`)) +
+  geom_jitter(mapping = aes(x = Hardware/1000000, y = `Lending interest rate`)) +
+  xlab("Hardware (mil)") +
+  ylab("Lending interest rate %") +
   theme(aspect.ratio = 1)
 scat_Unemployment <- ggplot(data = omnibus_USi) +
-  geom_jitter(mapping = aes(x = Hardware, y = Unemployment)) +
+  geom_jitter(mapping = aes(x = Hardware/1000000, y = Unemployment)) +
+  xlab("Hardware (mil)") +
   theme(aspect.ratio = 1)
 scat_CPI <- ggplot(data = omnibus_USi) +
-  geom_jitter(mapping = aes(x = Hardware, y = CPI)) +
+  geom_jitter(mapping = aes(x = Hardware/1000000, y = CPI)) +
+  xlab("Hardware (mil)") +
   theme(aspect.ratio = 1)
 
 
-grid.arrange(scat_CCI, scat_Inflation, scat_GDPgrowth, scat_GDP, scat_InterestRate, scat_Unemployment, scat_CPI, ncol =4)
+grid.arrange(scat_CCI, scat_Inflation, scat_GDPgrowth, scat_GDP, scat_InterestRate, scat_Unemployment, scat_CPI, ncol =3)
 ```
+
 ```{r}
 oUSi_cor <- cor(omnibus_USi %>% select(1:8))
 corrplot(oUSi_cor, type = "upper",
@@ -79,7 +88,9 @@ corrplot(oUSi_cor, type = "upper",
          tl.col = "black", tl.srt = 50) +
   theme(aspect.ratio = 1)
 ```
+
 ##Variable Selection
+
 ```{r}
 oUSi_x <- as.matrix(omnibus_USi[, 2:8])
 oUSi_y <- as.matrix(omnibus_USi[, 1])
@@ -102,26 +113,31 @@ bestsub_bic <- bestglm(omnibus_USi %>% select(1:8),
                         method = "exhaustive")
 summary(bestsub_bic$BestModel)
 ```
+
 #Check For Interaction
+
 ```{r}
 summary(lm(Hardware ~ CCI, data = omnibus_USi))
-summary(lm(Hardware ~ CCI + `GDP per capita` + `Lending interest rate`, data = omnibus_USi))
-summary(lm(Hardware ~ CCI + `GDP per capita` + `Lending interest rate` + CCI:`GDP per capita`, data = omnibus_USi))
-summary(lm(Hardware ~ CCI + `GDP per capita` + `Lending interest rate` + CCI:`Lending interest rate`, data = omnibus_USi))
-summary(lm(Hardware ~ CCI + `GDP per capita` + `Lending interest rate` + `GDP per capita`:`Lending interest rate`, data = omnibus_USi))
-summary(lm(Hardware ~ CCI + `GDP per capita` + `Lending interest rate` + `GDP per capita`:`Lending interest rate` + CCI:`GDP per capita`, data = omnibus_USi))
-summary(lm(Hardware ~ CCI + `GDP per capita` + `Lending interest rate` + CCI:`GDP per capita`:`Lending interest rate`, data = omnibus_USi))
-summary(lm(Hardware ~ CCI + `GDP per capita` + `Lending interest rate` + CCI:`GDP per capita` + CCI:`GDP per capita`:`Lending interest rate`, data = omnibus_USi))
+summary(lm(Hardware ~ CCI + `GDP pc` + `Lending interest rate`, data = omnibus_USi))
+summary(lm(Hardware ~ CCI + `GDP pc` + `Lending interest rate` + CCI:`GDP pc`, data = omnibus_USi))
+summary(lm(Hardware ~ CCI + `GDP pc` + `Lending interest rate` + CCI:`Lending interest rate`, data = omnibus_USi))
+summary(lm(Hardware ~ CCI + `GDP pc` + `Lending interest rate` + `GDP pc`:`Lending interest rate`, data = omnibus_USi))
+summary(lm(Hardware ~ CCI + `GDP pc` + `Lending interest rate` + `GDP pc`:`Lending interest rate` + CCI:`GDP pc`, data = omnibus_USi))
+summary(lm(Hardware ~ CCI + `GDP pc` + `Lending interest rate` + CCI:`GDP pc`:`Lending interest rate`, data = omnibus_USi))
+summary(lm(Hardware ~ CCI + `GDP pc` + `Lending interest rate` + CCI:`GDP pc` + CCI:`GDP pc`:`Lending interest rate`, data = omnibus_USi))
 ```
+
 #Liniar Model
+
 ```{r}
-omnibus_USi_lm <- lm(Hardware ~ CCI + `GDP per capita` + `Lending interest rate` + CCI:`GDP per capita`, data = omnibus_USi)
+omnibus_USi_lm <- lm(Hardware ~ CCI + `GDP pc` + `Lending interest rate` + CCI:`GDP pc`, data = omnibus_USi)
 omnibus_USi$residuals <- omnibus_USi_lm$residuals
 omnibus_USi$fitted <- omnibus_USi_lm$fitted.values
 summary(omnibus_USi_lm)
 ```
 
 #Assumptions
+
 ```{r}
 #crPlots(omnibus_USi_lm)
 
@@ -149,6 +165,7 @@ ggplot(data = omnibus_USi) +
 ```
 
 #Influential Points
+
 ```{r}
 plot(cooks.distance(omnibus_USi_lm))
 omnibus_USi$dffits <- dffits(omnibus_USi_lm)
@@ -164,12 +181,13 @@ ggplot(data = omnibus_USi) +
              linetype = "dashed") +
   theme(aspect.ratio = 1)
 ```
+
 #Inference
+
 ```{r}
 confint(omnibus_USi_lm)
-newdata = data.frame(CCI = 98.94, `GDP per capita` = 69288, `Lending interest rate`= 3.25) %>%
+newdata = data.frame(CCI = 98.94, `GDP pc` = 69288, `Lending interest rate`= 3.25) %>%
   rename("Lending interest rate" ="Lending.interest.rate",
-         "GDP per capita" = "GDP.per.capita")
+         "GDP pc" = "GDP.pc")
 predict(omnibus_USi_lm, newdata = newdata, interval = "confidence")
 ```
-
