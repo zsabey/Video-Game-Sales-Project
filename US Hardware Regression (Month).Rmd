@@ -28,11 +28,15 @@ econ <- read.csv('Indicators_edit.csv') %>%
 Unemployment_m<- read_excel("Unemployment Rates US.xlsx") %>%
   rename("Date" = "Month",
          "Unemployment" = "Total")
-GDP <- read.csv("Quarterly GDP.csv") %>%
+#GDP_q <- read.csv("Quarterly GDP.csv") %>%
+ # rename("Date" = "DATE",
+ #        "GDP" ="NA000334Q") %>%
+ # mutate(quarter = paste(year(Date),"/",quarter(Date))) %>%
+ # select(2,3)
+GDP <- read.csv("monthly GDP Normalized.csv") %>%
   rename("Date" = "DATE",
-         "GDP" ="NA000334Q") %>%
-  mutate(quarter = paste(year(Date),"/",quarter(Date))) %>%
-  select(2,3)
+         "GDP" ="USALORSGPNOSTSAM") %>%
+  mutate(Date = as.Date(Date))
 
 hardware <- read.csv('USA_Sales_vs_CCI.csv') %>%
   rename("Date" = "TIME") %>%
@@ -43,11 +47,11 @@ hardware <- read.csv('USA_Sales_vs_CCI.csv') %>%
   select(1,3:6)
 
 omnibus_US <- right_join(Unemployment_m, hardware, by = "Date")
-omnibus_US <- right_join(omnibus_US, GDP, by = "quarter") %>%
+omnibus_US <- right_join(omnibus_US, GDP, by = "Date") %>%
   select(1:7,9,10)
-omnibus_USi <- omnibus_US[-c(932:1176),] %>%
+omnibus_USi <- omnibus_US[-c(928:1465),] %>%
   mutate(Holidays = ifelse(month == 11 | month == 12, 1, 0)) %>%
-  select(8,1,9,2:6,10)
+  select(9,1,10,2:6,11)
 
 #omnibus_US <-right_join(econ, hardware, by = "year") %>%
  # select(1,8:16) %>%
