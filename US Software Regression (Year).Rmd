@@ -127,14 +127,14 @@ summary(bestsub_bic$BestModel)
 #Check For Interaction
 
 ```{r}
-summary(lm(Software ~ CPI + `GDP pc growth %` + `GDP pc`, data = omnibus_USi))
-summary(lm(Software ~ CPI + `GDP pc growth %` + `GDP pc` + CPI:`GDP pc growth %`, data = omnibus_USi))
-summary(lm(Software ~ CPI + `GDP pc growth %` + `GDP pc` + CPI:`GDP pc`, data = omnibus_USi))
-summary(lm(Software ~ CPI + `GDP pc growth %` + `GDP pc` + `GDP pc`:`GDP pc growth %`, data = omnibus_USi))
-summary(lm(Software ~ CPI + `GDP pc growth %` + `GDP pc` + CPI:`GDP pc`:`GDP pc growth %`, data = omnibus_USi))
-summary(lm(Software ~ CPI + `GDP pc growth %` + `GDP pc` + CPI:`GDP pc growth %` + CCI:`GDP pc`, data = omnibus_USi))
-summary(lm(Software ~ CPI + `GDP pc growth %` + `GDP pc` + CPI:`GDP pc growth %` + `GDP pc`:`GDP pc growth %`, data = omnibus_USi))
-summary(lm(Software ~ CPI + `GDP pc growth %` + `GDP pc` + `GDP pc`:`GDP pc growth %` + CCI:`GDP pc`, data = omnibus_USi))
+summary(lm(Software ~ CCI+ CPI + `GDP pc growth %` + `GDP pc`, data = omnibus_USi))
+summary(lm(Software ~ CCI+ CPI + `GDP pc growth %` + `GDP pc` + CPI:`GDP pc growth %`, data = omnibus_USi))
+summary(lm(Software ~ CCI+ CPI + `GDP pc growth %` + `GDP pc` + CPI:`GDP pc`, data = omnibus_USi))
+summary(lm(Software ~ CCI+ CPI + `GDP pc growth %` + `GDP pc` + `GDP pc`:`GDP pc growth %`, data = omnibus_USi))
+summary(lm(Software ~ CCI+ CPI + `GDP pc growth %` + `GDP pc` + CPI:`GDP pc`:`GDP pc growth %`, data = omnibus_USi))
+summary(lm(Software ~ CCI+ CPI + `GDP pc growth %` + `GDP pc` + CPI:`GDP pc growth %` + CCI:`GDP pc`, data = omnibus_USi))
+summary(lm(Software ~ CCI+ CPI + `GDP pc growth %` + `GDP pc` + CPI:`GDP pc growth %` + `GDP pc`:`GDP pc growth %`, data = omnibus_USi))
+summary(lm(Software ~ CCI+ CPI + `GDP pc growth %` + `GDP pc` + `GDP pc`:`GDP pc growth %` + CCI:`GDP pc`, data = omnibus_USi))
 ```
 
 #Liniar Model
