@@ -1,0 +1,17 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(ggplot2)
+
+data <- read.csv('USSoftwareYearly.csv')
+
+ggplot(data, aes(x = Year, y = Total_mil)) +
+  geom_point() +
+  geom_line() +
+  labs(x = "Year", y = "Total Software Sales") +
+  ggtitle("Yearly Software Sales in the United States")
+```
+
