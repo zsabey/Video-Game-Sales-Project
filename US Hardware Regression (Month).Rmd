@@ -71,9 +71,8 @@ omnibus_USi <- omnibus_US[-c(928:1465),] %>%
 ```
 #Interesting Graphs
 ```{r}
-ggplot(data = omnibus_US) +
-  geom_smooth(mapping = aes(x= Date, y = GDP))+
-  geom_smooth(mapping = aes(x= Date, y = Hardware/2000))
+ggplot(data = hardware) +
+  geom_point(mapping = aes(x= Date, y = Hardware, color = month))
 ```
 
 #Exploratory Data Analysis 

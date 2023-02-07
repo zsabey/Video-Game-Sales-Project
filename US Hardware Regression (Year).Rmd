@@ -39,12 +39,26 @@ omnibus_US <-right_join(econ, hardware, by = "Date") %>%
          `CPI` = as.numeric(`US.Consumer.price.index`),
          `CCI` = as.numeric(CCI)) %>%
   select(8:15,1)
-omnibus_USi <- omnibus_US[-c(18:19),] 
-```
+omnibus_US$`Inflation %`[18] <- 7
+omnibus_US$`Inflation %`[19] <- 6.5
+omnibus_US$CCI[19] <- 97.1833333333
+omnibus_US$`GDP pc growth %`[18] <- 5.7
+omnibus_US$`GDP pc growth %`[19] <- 8.60
+omnibus_US$`GDP pc`[18] <- 69227.11
+omnibus_US$`GDP pc`[19] <- 75179.59
+omnibus_US$`Lending interest rate`[18] <- 3.25
+omnibus_US$`Lending interest rate`[19] <- 4.25
+omnibus_US$Unemployment[18] <- 3.9
+omnibus_US$Unemployment[19] <- 3.5
+omnibus_US$CPI[18] <- 107
+omnibus_US$CPI[19] <- 113.955
+omnibus_USi <- omnibus_US 
 
+```
 #Interesting Graphs
 
 #Exploratory Data Analysis
+
 
 ```{r}
 scat_CCI <- ggplot(data = omnibus_USi) +
@@ -78,7 +92,7 @@ scat_CPI <- ggplot(data = omnibus_USi) +
   theme(aspect.ratio = 1)
 
 
-grid.arrange(scat_CCI, scat_Inflation, scat_GDPgrowth, scat_GDP, scat_InterestRate, scat_Unemployment, scat_CPI, ncol =3)
+grid.arrange(scat_CCI, scat_Inflation, scat_GDP, scat_GDPgrowth, scat_InterestRate, scat_Unemployment, scat_CPI, ncol =3)
 ```
 
 ```{r}
@@ -97,13 +111,9 @@ oUSi_y <- as.matrix(omnibus_USi[, 1])
 oUSi_Elnet <- cv.glmnet(x = oUSi_x,
                         y = oUSi_y, 
                         type.measure = "mse", 
-                        alpha = .5)  # 0 is code for "ridge regression"
-
-# lambda.min: value of lambda that gives minimum mean cross-validated error
-oUSi_Elnet$lambda.min
-# lambda.1se: value of lambda within 1 standard error of the minimum 
-# cross-validated error
-oUSi_Elnet$lambda.1se
+                        alpha = .5)  
+#oUSi_Elnet$lambda.min
+#oUSi_Elnet$lambda.1se
 
 coef(oUSi_Elnet, s = "lambda.min")
 coef(oUSi_Elnet, s = "lambda.1se")
@@ -117,8 +127,15 @@ summary(bestsub_bic$BestModel)
 #Check For Interaction
 
 ```{r}
-summary(lm(Hardware ~ CCI, data = omnibus_USi))
-summary(lm(Hardware ~ CCI + `GDP pc` + `Lending interest rate`, data = omnibus_USi))
+summary(lm(Hardware ~ CCI + `GDP pc growth %` + Unemployment, data = omnibus_USi))
+summary(lm(Hardware ~ CCI + `GDP pc growth %` + Unemployment + CCI:`GDP pc growth %`, data = omnibus_USi))
+summary(lm(Hardware ~ CCI + `GDP pc growth %` + Unemployment + CCI:Unemployment, data = omnibus_USi))
+summary(lm(Hardware ~ CCI + `GDP pc growth %` + Unemployment + Unemployment:`GDP pc growth %`, data = omnibus_USi))
+summary(lm(Hardware ~ CCI + `GDP pc growth %` + Unemployment + CCI:Unemployment:`GDP pc growth %`, data = omnibus_USi))
+summary(lm(Hardware ~ CCI + `GDP pc growth %` + Unemployment + CCI:`GDP pc growth %` + CCI:Unemployment, data = omnibus_USi))
+summary(lm(Hardware ~ CCI + `GDP pc growth %` + Unemployment + CCI:`GDP pc growth %` + Unemployment:`GDP pc growth %`, data = omnibus_USi))
+summary(lm(Hardware ~ CCI + `GDP pc growth %` + Unemployment + Unemployment:`GDP pc growth %` + CCI:Unemployment, data = omnibus_USi))
+
 summary(lm(Hardware ~ CCI + `GDP pc` + `Lending interest rate` + CCI:`GDP pc`, data = omnibus_USi))
 summary(lm(Hardware ~ CCI + `GDP pc` + `Lending interest rate` + CCI:`Lending interest rate`, data = omnibus_USi))
 summary(lm(Hardware ~ CCI + `GDP pc` + `Lending interest rate` + `GDP pc`:`Lending interest rate`, data = omnibus_USi))
@@ -130,7 +147,8 @@ summary(lm(Hardware ~ CCI + `GDP pc` + `Lending interest rate` + CCI:`GDP pc` + 
 #Liniar Model
 
 ```{r}
-omnibus_USi_lm <- lm(Hardware ~ CCI + `GDP pc` + `Lending interest rate` + CCI:`GDP pc`, data = omnibus_USi)
+#omnibus_USi_lm <- lm(Hardware ~ CCI + `GDP pc` + `Lending interest rate` + CCI:`GDP pc`, data = omnibus_USi)
+omnibus_USi_lm <- lm(Hardware ~ CCI + `GDP pc growth %` + Unemployment + Unemployment:`GDP pc growth %` + CCI:Unemployment, data = omnibus_USi)
 omnibus_USi$residuals <- omnibus_USi_lm$residuals
 omnibus_USi$fitted <- omnibus_USi_lm$fitted.values
 summary(omnibus_USi_lm)
@@ -186,8 +204,7 @@ ggplot(data = omnibus_USi) +
 
 ```{r}
 confint(omnibus_USi_lm)
-newdata = data.frame(CCI = 98.94, `GDP pc` = 69288, `Lending interest rate`= 3.25) %>%
-  rename("Lending interest rate" ="Lending.interest.rate",
-         "GDP pc" = "GDP.pc")
+newdata = data.frame(CCI = 98.94, `GDP pc growth %` = 0.2, `Unemployment`= 4.6)%>%
+  rename("GDP pc growth %" = "GDP.pc.growth..")
 predict(omnibus_USi_lm, newdata = newdata, interval = "confidence")
 ```
