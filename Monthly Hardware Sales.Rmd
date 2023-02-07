@@ -15,6 +15,6 @@ data$Date <- as.Date(data$Date)
 ggplot(data, aes(x = Date, y = Hardware, color = month)) +
   geom_line() +
   labs(x = "Date", y = "Total Hardware Sales") +
-  ggtitle("Hardware Monthly Sales")
+  ggtitle("Monthly Hardware Sales in the United States")
 ```
 
