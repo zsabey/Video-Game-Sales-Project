@@ -38,7 +38,7 @@ omnibus_US <-right_join(econ, hardware, by = "Date") %>%
          `Unemployment` = as.numeric(`US.Unemployment`),
          `CPI` = as.numeric(`US.Consumer.price.index`),
          `CCI` = as.numeric(CCI)) %>%
-  select(8:15,1)
+  select(9:15,8)
 omnibus_US$`Inflation %`[18] <- 7
 omnibus_US$`Inflation %`[19] <- 6.5
 omnibus_US$CCI[19] <- 97.1833333333
@@ -96,7 +96,7 @@ grid.arrange(scat_CCI, scat_Inflation, scat_GDP, scat_GDPgrowth, scat_InterestRa
 ```
 
 ```{r}
-oUSi_cor <- cor(omnibus_USi %>% select(1:8))
+oUSi_cor <- cor(omnibus_USi %>% select(8,1:7))
 corrplot(oUSi_cor, type = "upper",
          method ="number",
          tl.col = "black", tl.srt = 50) +
@@ -106,8 +106,8 @@ corrplot(oUSi_cor, type = "upper",
 ##Variable Selection
 
 ```{r}
-oUSi_x <- as.matrix(omnibus_USi[, 2:8])
-oUSi_y <- as.matrix(omnibus_USi[, 1])
+oUSi_x <- as.matrix(omnibus_USi[, 1:7])
+oUSi_y <- as.matrix(omnibus_USi[, 8])
 oUSi_Elnet <- cv.glmnet(x = oUSi_x,
                         y = oUSi_y, 
                         type.measure = "mse", 
