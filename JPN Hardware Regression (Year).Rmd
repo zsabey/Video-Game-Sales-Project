@@ -95,7 +95,7 @@ grid.arrange(scat_CCI, scat_Inflation, scat_GDP, scat_GDPgrowth, scat_Unemployme
 ```
 
 ```{r}
-oJPN_cor <- cor(omnibus_JPN %>% select(8,2:7))
+oJPN_cor <- cor(omnibus_JPN %>% select(7,1:6))
 corrplot(oJPN_cor, type = "upper",
          method ="number",
          tl.col = "black", tl.srt = 50) +

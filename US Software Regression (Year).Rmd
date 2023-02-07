@@ -49,9 +49,13 @@ omnibus_US <-right_join(econ, software, by = "Date") %>%
          `CPI` = as.numeric(`US.Consumer.price.index`),
          `CCI` = as.numeric(CCI)) %>%
   select(1,9:15,8)
-omnibus_USi <- omnibus_US[-c(40:63),]
+omnibus_USi <- omnibus_US[-c(36:63),]
 ```
 #Interesting Graphs
+```{r}
+ggplot(data = software) +
+  geom_point(mapping = aes(x= Date, y = Software))
+```
 
 #Exploratory Data Analysis
 
@@ -123,28 +127,20 @@ summary(bestsub_bic$BestModel)
 #Check For Interaction
 
 ```{r}
-summary(lm(Software ~ CCI + `GDP pc growth %` + Unemployment, data = omnibus_USi))
-summary(lm(Software ~ CCI + `GDP pc growth %` + Unemployment + CCI:`GDP pc growth %`, data = omnibus_USi))
-summary(lm(Software ~ CCI + `GDP pc growth %` + Unemployment + CCI:Unemployment, data = omnibus_USi))
-summary(lm(Software ~ CCI + `GDP pc growth %` + Unemployment + Unemployment:`GDP pc growth %`, data = omnibus_USi))
-summary(lm(Software ~ CCI + `GDP pc growth %` + Unemployment + CCI:Unemployment:`GDP pc growth %`, data = omnibus_USi))
-summary(lm(Software ~ CCI + `GDP pc growth %` + Unemployment + CCI:`GDP pc growth %` + CCI:Unemployment, data = omnibus_USi))
-summary(lm(Software ~ CCI + `GDP pc growth %` + Unemployment + CCI:`GDP pc growth %` + Unemployment:`GDP pc growth %`, data = omnibus_USi))
-summary(lm(Software ~ CCI + `GDP pc growth %` + Unemployment + Unemployment:`GDP pc growth %` + CCI:Unemployment, data = omnibus_USi))
-
-summary(lm(Software ~ CCI + `GDP pc` + `Lending interest rate` + CCI:`GDP pc`, data = omnibus_USi))
-summary(lm(Software ~ CCI + `GDP pc` + `Lending interest rate` + CCI:`Lending interest rate`, data = omnibus_USi))
-summary(lm(Software ~ CCI + `GDP pc` + `Lending interest rate` + `GDP pc`:`Lending interest rate`, data = omnibus_USi))
-summary(lm(Software ~ CCI + `GDP pc` + `Lending interest rate` + `GDP pc`:`Lending interest rate` + CCI:`GDP pc`, data = omnibus_USi))
-summary(lm(Software ~ CCI + `GDP pc` + `Lending interest rate` + CCI:`GDP pc`:`Lending interest rate`, data = omnibus_USi))
-summary(lm(Software ~ CCI + `GDP pc` + `Lending interest rate` + CCI:`GDP pc` + CCI:`GDP pc`:`Lending interest rate`, data = omnibus_USi))
+summary(lm(Software ~ CPI + `GDP pc growth %` + `GDP pc`, data = omnibus_USi))
+summary(lm(Software ~ CPI + `GDP pc growth %` + `GDP pc` + CPI:`GDP pc growth %`, data = omnibus_USi))
+summary(lm(Software ~ CPI + `GDP pc growth %` + `GDP pc` + CPI:`GDP pc`, data = omnibus_USi))
+summary(lm(Software ~ CPI + `GDP pc growth %` + `GDP pc` + `GDP pc`:`GDP pc growth %`, data = omnibus_USi))
+summary(lm(Software ~ CPI + `GDP pc growth %` + `GDP pc` + CPI:`GDP pc`:`GDP pc growth %`, data = omnibus_USi))
+summary(lm(Software ~ CPI + `GDP pc growth %` + `GDP pc` + CPI:`GDP pc growth %` + CCI:`GDP pc`, data = omnibus_USi))
+summary(lm(Software ~ CPI + `GDP pc growth %` + `GDP pc` + CPI:`GDP pc growth %` + `GDP pc`:`GDP pc growth %`, data = omnibus_USi))
+summary(lm(Software ~ CPI + `GDP pc growth %` + `GDP pc` + `GDP pc`:`GDP pc growth %` + CCI:`GDP pc`, data = omnibus_USi))
 ```
 
 #Liniar Model
 
 ```{r}
-#omnibus_USi_lm <- lm(Software ~ CCI + `GDP pc` + `Lending interest rate` + CCI:`GDP pc`, data = omnibus_USi)
-omnibus_USi_lm <- lm(Software ~ CCI + `GDP pc growth %` + Unemployment + Unemployment:`GDP pc growth %` + CCI:Unemployment, data = omnibus_USi)
+omnibus_USi_lm <- lm(formula = Software ~ CPI + `GDP pc growth %` + `GDP pc` + CPI:`GDP pc growth %`, data = omnibus_USi)
 omnibus_USi$residuals <- omnibus_USi_lm$residuals
 omnibus_USi$fitted <- omnibus_USi_lm$fitted.values
 summary(omnibus_USi_lm)
@@ -169,7 +165,7 @@ autoplot(omnibus_USi_lm, which = 1, ncol = 1, nrow = 1) +
 
 ggplot(data = omnibus_USi) + 
   geom_histogram(mapping = aes(x = residuals, y = ..density..), 
-                 binwidth = 3500000) +
+                 binwidth = 40) +
   stat_function(fun = dnorm, 
                 color = "red", 
                 linewidth = 2,
@@ -200,8 +196,9 @@ ggplot(data = omnibus_USi) +
 
 ```{r}
 confint(omnibus_USi_lm)
-newdata = data.frame(CCI = 98.94, `GDP pc growth %` = 0.2, `Unemployment`= 4.6)%>%
-  rename("GDP pc growth %" = "GDP.pc.growth..")
+newdata = data.frame(CPI = 98.94, `GDP pc growth %` = 0.2, `GDP pc`= 63027.68)%>%
+  rename("GDP pc growth %" = "GDP.pc.growth..",
+         "GDP pc" = "GDP.pc")
 predict(omnibus_USi_lm, newdata = newdata, interval = "confidence")
 ```
 
