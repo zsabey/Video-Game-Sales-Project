@@ -1,0 +1,20 @@
+---
+title: "Monthly Hardware Sales"
+author: "Andrew Bargeron"
+date: "2023-02-06"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+
+data <- hardware
+
+data$Date <- as.Date(data$Date)
+
+ggplot(data, aes(x = Date, y = Hardware, color = month)) +
+  geom_line() +
+  labs(x = "Date", y = "Total Hardware Sales") +
+  ggtitle("Monthly Hardware Sales in the United States")
+```
+
