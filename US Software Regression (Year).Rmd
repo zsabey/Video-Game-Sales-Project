@@ -200,6 +200,6 @@ confint(omnibus_USi_lm)
 newdata = data.frame(CPI = 98.94, `GDP pc growth %` = 0.2, `GDP pc`= 63027.68)%>%
   rename("GDP pc growth %" = "GDP.pc.growth..",
          "GDP pc" = "GDP.pc")
-predict(omnibus_USi_lm, newdata = newdata, interval = "confidence")
+#predict(omnibus_USi_lm, newdata = newdata, interval = "confidence")
 ```
 
