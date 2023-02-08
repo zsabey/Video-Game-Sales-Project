@@ -95,7 +95,7 @@ grid.arrange(scat_CCI, scat_Inflation, scat_GDP, scat_GDPgrowth, scat_Unemployme
 ```
 
 ```{r}
-oJPN_cor <- cor(omnibus_JPN %>% select(8,2:7))
+oJPN_cor <- cor(omnibus_JPN %>% select(7,1:7))
 corrplot(oJPN_cor, type = "upper",
          method ="number",
          tl.col = "black", tl.srt = 50) +
@@ -145,6 +145,7 @@ omnibus_JPN_lm <- lm(Hardware ~ CCI + `GDP pc growth %` + Unemployment + Unemplo
 omnibus_JPN$residuals <- omnibus_JPN_lm$residuals
 omnibus_JPN$fitted <- omnibus_JPN_lm$fitted.values
 summary(omnibus_JPN_lm)
+summary(lm(Hardware ~ CPI + Unemployment + CPI:Unemployment, data = omnibus_JPN))
 ```
 
 #Assumptions
