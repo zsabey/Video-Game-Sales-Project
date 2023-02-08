@@ -1,0 +1,193 @@
+---
+title: "JPN Software Regression (Year)"
+author: "Nate Cox"
+date: "2023-02-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(corrplot)  
+library(bestglm)  
+library(car) 
+library(glmnet)
+library(gridExtra)
+library(caret)
+library(sjmisc)
+library(lubridate)
+library(ggfortify)
+library(readxl)
+```
+
+```{r}
+econ <- read.csv('Indicators_edit.csv') %>%
+  rename("Date" = "Year") %>%
+  select(2:8)
+CCI <- read.csv("CCI.csv")
+CCI <- CCI[-c(487:1824),] %>%
+  mutate(TIME = as.Date(paste(TIME, "-01", sep="")),
+         Date = lubridate::year(TIME)) %>%
+  select(4,3) %>%
+  group_by(Date) %>%
+  summarise_at(vars(CCI), list(CCI = mean))
+
+software <- read.csv("JPSoftwareYearly.csv") %>%
+  rename("Date" = "Year",
+         "Software" = "Total_mil") %>%
+  mutate(Software = as.numeric(Software),
+         Date = as.numeric(Date))
+
+omnibus_JPN <-right_join(econ, software, by = "Date") %>%
+  right_join(CCI, by = "Date") %>%
+  mutate(`Inflation %` = as.numeric(`JPN.Inflation..annual...`),
+         `GDP pc growth %` = as.numeric(`JPN.GDP.per.capita.growth..annual...`),
+         `GDP pc` = as.numeric(`JPN.GDP.per.capita`),
+         `Lending interest rate` = as.numeric(`JPN.Lending.interest.rate....`),
+         `Unemployment` = as.numeric(`JPN.Unemployment`),
+         `CPI` = as.numeric(`JPN.Consumer.price.index`)) %>%
+  select(1,9:12,14:15,8)
+omnibus_JPN <- omnibus_JPN[-c(34:41),]
+
+```
+#Interesting Graphs
+
+#Exploratory Data Analysis
+
+
+```{r}
+scat_CCI <- ggplot(data = omnibus_JPN) +
+  geom_jitter(mapping = aes(x = Software, y = CCI )) +
+  xlab("Software (mil)") +
+  theme(aspect.ratio = 1)
+scat_Inflation <- ggplot(data = omnibus_JPN) +
+  geom_jitter(mapping = aes(x = Software, y = `Inflation %`)) +
+  xlab("Software (mil)") +
+  theme(aspect.ratio = 1)
+scat_GDPgrowth <- ggplot(data = omnibus_JPN) +
+  geom_jitter(mapping = aes(x = Software, y = `GDP pc growth %`)) +
+  xlab("Software (mil)") +
+  theme(aspect.ratio = 1)
+scat_GDP <- ggplot(data = omnibus_JPN) +
+  geom_jitter(mapping = aes(x = Software, y = `GDP pc`)) +
+  xlab("Software (mil)") +
+  theme(aspect.ratio = 1)
+scat_Unemployment <- ggplot(data = omnibus_JPN) +
+  geom_jitter(mapping = aes(x = Software, y = Unemployment)) +
+  xlab("Software (mil)") +
+  theme(aspect.ratio = 1)
+scat_CPI <- ggplot(data = omnibus_JPN) +
+  geom_jitter(mapping = aes(x = Software, y = CPI)) +
+  xlab("Software (mil)") +
+  theme(aspect.ratio = 1)
+
+
+grid.arrange(scat_CCI, scat_Inflation, scat_GDP, scat_GDPgrowth, scat_Unemployment, scat_CPI, ncol =3)
+```
+
+```{r}
+oJPN_cor <- cor(omnibus_JPN %>% select(8,2:7))
+corrplot(oJPN_cor, type = "upper",
+         method ="number",
+         tl.col = "black", tl.srt = 50) +
+  theme(aspect.ratio = 1)
+```
+
+##Variable Selection
+
+```{r}
+oJPN_x <- as.matrix(omnibus_JPN[, 2:7])
+oJPN_y <- as.matrix(omnibus_JPN[, 8])
+oJPN_Elnet <- cv.glmnet(x = oJPN_x,
+                        y = oJPN_y, 
+                        type.measure = "mse", 
+                        alpha = .5)  
+#oJPN_Elnet$lambda.min
+#oJPN_Elnet$lambda.1se
+
+coef(oJPN_Elnet, s = "lambda.min")
+coef(oJPN_Elnet, s = "lambda.1se")
+
+bestsub_bic <- bestglm(omnibus_JPN %>% select(2:8),
+                        IC = "BIC",
+                        method = "exhaustive")
+summary(bestsub_bic$BestModel)
+```
+
+#Check For Interaction
+
+```{r}
+summary(lm(Software ~ CPI + `GDP pc` + Unemployment + `Inflation %`, data = omnibus_JPN))
+summary(lm(Software ~ CPI + `GDP pc` + Unemployment + `Inflation %` + CPI:`GDP pc`, data = omnibus_JPN))
+summary(lm(Software ~ CPI + `GDP pc` + Unemployment + `Inflation %` +CPI:Unemployment, data = omnibus_JPN))
+summary(lm(Software ~ CPI + `GDP pc` + Unemployment + `Inflation %` +Unemployment:`GDP pc`, data = omnibus_JPN))
+summary(lm(Software ~ CPI + `GDP pc` + Unemployment + `Inflation %` +CPI:Unemployment:`GDP pc`, data = omnibus_JPN))
+summary(lm(Software ~ CPI + `GDP pc` + Unemployment + `Inflation %` +CPI:`GDP pc` + CPI:Unemployment, data = omnibus_JPN))
+summary(lm(Software ~ CPI + `GDP pc` + Unemployment + `Inflation %` +CPI:`GDP pc` + Unemployment:`GDP pc`, data = omnibus_JPN))
+summary(lm(Software ~ CPI + `GDP pc` + Unemployment + `Inflation %` +Unemployment:`GDP pc` + CPI:Unemployment, data = omnibus_JPN))
+
+```
+
+#Liniar Model
+
+```{r}
+omnibus_JPN_lm <- lm(Software ~ CPI + `GDP pc` + Unemployment + `Inflation %`, data = omnibus_JPN)
+omnibus_JPN$residuals <- omnibus_JPN_lm$residuals
+omnibus_JPN$fitted <- omnibus_JPN_lm$fitted.values
+summary(omnibus_JPN_lm)
+```
+
+#Assumptions
+
+```{r}
+#crPlots(omnibus_JPN_lm)
+
+avPlots(omnibus_JPN_lm)
+
+autoplot(omnibus_JPN_lm, which = 2, ncol = 1, nrow = 1) + 
+  theme(aspect.ratio = 1)
+
+ggplot(omnibus_JPN) + 
+  geom_boxplot(mapping = aes(x = Software, y = residuals))+ 
+  theme(aspect.ratio = 1)
+
+autoplot(omnibus_JPN_lm, which = 1, ncol = 1, nrow = 1) +
+  theme(aspect.ratio = 1)
+
+ggplot(data = omnibus_JPN) + 
+  geom_histogram(mapping = aes(x = residuals, y = ..density..), 
+                 binwidth = 10) +
+  stat_function(fun = dnorm, 
+                color = "red", 
+                linewidth = 2,
+                args = list(mean = mean(omnibus_JPN$residuals), 
+                            sd = sd(omnibus_JPN$residuals))) +
+  theme(aspect.ratio = 1)
+```
+
+#Influential Points
+
+```{r}
+plot(cooks.distance(omnibus_JPN_lm))
+omnibus_JPN$dffits <- dffits(omnibus_JPN_lm)
+
+ggplot(data = omnibus_JPN) + 
+  geom_point(mapping = aes(x = as.numeric(rownames(omnibus_JPN)), 
+                           y = abs(dffits))) +
+  ylab("Absolute Value of DFFITS for Y") +
+  xlab("Observation Number") +
+  geom_hline(mapping = aes(yintercept = 2 * sqrt(length(omnibus_JPN_lm$coefficients) /
+                                                   length(dffits))),
+             color = "red", 
+             linetype = "dashed") +
+  theme(aspect.ratio = 1)
+```
+
+#Inference
+
+```{r}
+confint(omnibus_JPN_lm)
+newdata = data.frame(CPI = 100.4, `GDP pc` = 38475.395, `Unemployment`= 4.04, `Inflation %` = 0.7)%>%
+  rename("GDP pc" = "GDP.pc",
+         "Inflation %" = "Inflation..")
+predict(omnibus_JPN_lm, newdata = newdata, interval = "confidence")
+```
