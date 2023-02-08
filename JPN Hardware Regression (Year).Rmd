@@ -126,9 +126,9 @@ summary(bestsub_bic$BestModel)
 #Check For Interaction
 
 ```{r}
-summary(lm(Hardware ~ CCI + `GDP pc growth %` + Unemployment, data = omnibus_JPN))
-summary(lm(Hardware ~ CCI + `GDP pc growth %` + Unemployment + CCI:`GDP pc growth %`, data = omnibus_JPN))
-summary(lm(Hardware ~ CCI + `GDP pc growth %` + Unemployment + CCI:Unemployment, data = omnibus_JPN))
+summary(lm(Hardware ~ CPI + `GDP pc growth %`, data = omnibus_JPN))
+summary(lm(Hardware ~ CPI + `GDP pc growth %` + CPI:`GDP pc growth %`, data = omnibus_JPN))
+summary(lm(Hardware ~ CPI + `GDP pc growth %` + Unemployment + CCI:Unemployment, data = omnibus_JPN))
 summary(lm(Hardware ~ CCI + `GDP pc growth %` + Unemployment + Unemployment:`GDP pc growth %`, data = omnibus_JPN))
 summary(lm(Hardware ~ CCI + `GDP pc growth %` + Unemployment + CCI:Unemployment:`GDP pc growth %`, data = omnibus_JPN))
 summary(lm(Hardware ~ CCI + `GDP pc growth %` + Unemployment + CCI:`GDP pc growth %` + CCI:Unemployment, data = omnibus_JPN))
@@ -141,7 +141,7 @@ summary(lm(Hardware ~ CCI + `GDP pc growth %` + Unemployment + Unemployment:`GDP
 
 ```{r}
 #omnibus_JPN_lm <- lm(Hardware ~ CCI + `GDP pc` + `Lending interest rate` + CCI:`GDP pc`, data = omnibus_JPN)
-omnibus_JPN_lm <- lm(Hardware ~ CCI + `GDP pc growth %` + Unemployment + Unemployment:`GDP pc growth %` + CCI:Unemployment, data = omnibus_JPN)
+omnibus_JPN_lm <- lm(Hardware ~ CPI + `GDP pc growth %`, data = omnibus_JPN)
 omnibus_JPN$residuals <- omnibus_JPN_lm$residuals
 omnibus_JPN$fitted <- omnibus_JPN_lm$fitted.values
 summary(omnibus_JPN_lm)

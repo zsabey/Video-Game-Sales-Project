@@ -140,7 +140,8 @@ summary(lm(Software ~ CCI+ CPI + `GDP pc growth %` + `GDP pc` + `GDP pc`:`GDP pc
 #Liniar Model
 
 ```{r}
-omnibus_USi_lm <- lm(formula = Software ~ CPI + `GDP pc growth %` + `GDP pc` + CPI:`GDP pc growth %`, data = omnibus_USi)
+omnibus_USi_lm <- lm(formula = Software ~ CCI + CPI + `GDP pc growth %` + `GDP pc` + 
+    CPI:`GDP pc`, data = omnibus_USi)
 omnibus_USi$residuals <- omnibus_USi_lm$residuals
 omnibus_USi$fitted <- omnibus_USi_lm$fitted.values
 summary(omnibus_USi_lm)
