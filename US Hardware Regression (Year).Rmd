@@ -207,4 +207,5 @@ confint(omnibus_USi_lm)
 newdata = data.frame(CCI = 98.94, `GDP pc growth %` = 0.2, `Unemployment`= 4.6)%>%
   rename("GDP pc growth %" = "GDP.pc.growth..")
 predict(omnibus_USi_lm, newdata = newdata, interval = "confidence")
+
 ```
